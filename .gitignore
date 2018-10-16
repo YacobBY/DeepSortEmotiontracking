@@ -1,0 +1,8 @@
+
+\.idea/
+
+output\.avi
+
+detection\.txt
+
+model_data/yolo\.h5
