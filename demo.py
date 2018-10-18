@@ -123,6 +123,86 @@ def main(yolo):
             bbox = track.to_tlbr()
             # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
             # cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1])), 0, 5e-3 * 200, (0, 255, 0), 2)
+            currentPeopleInFrame += 1
+            # print(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
+
+            numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
+            imageList.append(numpArr)
+            # cv2.destroyAllWindows()
+        i = 0
+        for item in (imageList):
+            i += 1
+            gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
+            rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
+
+            faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
+                                                  minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
+
+            for face_coordinates in faces:
+
+                x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
+                gray_face = gray_image[y1:y2, x1:x2]
+                try:
+                    gray_face = cv2.resize(gray_face, (emotion_target_size))
+                except:
+                    continue
+
+                gray_face = preprocess_input(gray_face, True)
+                gray_face = np.expand_dims(gray_face, 0)
+                gray_face = np.expand_dims(gray_face, -1)
+                emotion_prediction = emotion_classifier.predict(gray_face)
+                emotion_probability = np.max(emotion_prediction)
+                emotion_label_arg = np.argmax(emotion_prediction)
+                emotion_text = emotion_labels[emotion_label_arg]
+                emotion_window.append(emotion_text)
+
+                if len(emotion_window) > frame_window:
+                    emotion_window.pop(0)
+                try:
+                    emotion_mode = mode(emotion_window)
+                except:
+                    continue
+
+                if emotion_text == 'angry':
+                    color = emotion_probability * np.asarray((255, 0, 0))
+                    print("angry", i)
+                elif emotion_text == 'sad':
+                    color = emotion_probability * np.asarray((0, 0, 255))
+                    print("sad", i)
+                elif emotion_text == 'happy':
+                    color = emotion_probability * np.asarray((255, 255, 0))
+                    print("happy", i)
+                elif emotion_text == 'surprise':
+                    color = emotion_probability * np.asarray((0, 255, 255))
+                    print("surprise", i)
+                else:
+                    color = emotion_probability * np.asarray((0, 255, 0))
+                    print("neutral", i)
+                color = color.astype(int)
+                color = color.tolist()
+
+                draw_bounding_box(face_coordinates, rgb_image, color)
+                draw_text(face_coordinates, rgb_image, emotion_mode,
+                          color, 0, -45, 1, 1)
+
+            item = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
+            cv2.imshow('jaja%d' % i, item)
+
+        # cv2.imshow('ajaja', imageList[1])
+        # cv2.imshow('jaja', frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
+
+        cv2.imshow('FilteredImage', frame)
+        if resetCounter >= amountOfFramesPerScan:
+            peopleInFrameList.append(currentPeopleInFrame)
+            print("Total amount of people %d" % (currentPeopleInFrame))
+
+            # for x in range(len(peopleInFrameList)):
+            #     print("listie  %d" % (peopleInFrameList[x]))
+            print(peopleInFrameList)
+            resetCounter = 0
+        else:
+            resetCounter += 1
+        print("Geen print of add deze keer %d" % (resetCounter))
 
         for det in detections:
             bbox = det.to_tlbr()
@@ -189,8 +269,8 @@ def main(yolo):
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
 
-            item = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
-            cv2.imshow('jaja%d' % i, item)
+            # item = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
+            # cv2.imshow('jaja%d' % i, item)
 
         # cv2.imshow('ajaja', imageList[1])
         # cv2.imshow('jaja', frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
