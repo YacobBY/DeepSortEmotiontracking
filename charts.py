@@ -47,26 +47,26 @@ def update_figure(rows, selected_row_indices):
     dff = pd.DataFrame(rows)
     fig = plotly.tools.make_subplots(
         rows=3, cols=1,
-        subplot_titles=('Beef', 'Pork', 'Poultry'),
+        subplot_titles=('Matties', 'Aantal', 'IDB'),
         shared_xaxes=True)
     marker = {'color': ['#0074D9'] * len(dff)}
     for i in (selected_row_indices or []):
         marker['color'][i] = '#FF851B'
     fig.append_trace({
-        'x': dff['state'],
-        'y': dff['beef'],
+        'x': dff['Aantal'],
+        'y': dff['Matties'],
         'type': 'bar',
         'marker': marker
     }, 1, 1)
     fig.append_trace({
-        'x': dff['state'],
-        'y': dff['pork'],
+        'x': dff['Aantal'],
+        'y': dff['Indebuurt'],
         'type': 'bar',
         'marker': marker
     }, 2, 1)
     fig.append_trace({
-        'x': dff['state'],
-        'y': dff['poultry'],
+        'x': dff['Aantal'],
+        'y': dff['Indebuurt'],
         'type': 'bar',
         'marker': marker
     }, 3, 1)
