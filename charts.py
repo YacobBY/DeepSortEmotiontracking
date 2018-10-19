@@ -74,8 +74,8 @@ def update_figure(rows, selected_row_indices):
         'marker': marker
     }, 2, 1)
     fig.append_trace({
-        'x': dff['personID'],
-        'y': dff['gender'],
+        'x': dff['watchTime'],
+        'y': dff['trackingTime'],
         'type': 'bar',
         'marker': marker
     }, 3, 1)
