@@ -9,9 +9,18 @@ import dash_table_experiments as dt
 import dash.dependencies
 from dash.dependencies import Input, Output, State
 import plotly
+import csv
+#
+# with open('templates/test2.csv', 'a') as csvFile:
+#     csvFile.writerows(['mafasdf,12,42,121'])
+
+a=50
+fields=['6','8','NEUTRAL','ISO8601','MALE','2']
+with open(r'templates/test2.csv', 'a') as f:
+    writer = csv.writer(f)
+    writer.writerow(fields)
 
 # Load datasets
-US_STATES_URL = 'templates/test1.csv'
 US_AG_URL = 'templates/test2.csv'
 
 df_ag = pd.read_csv(US_AG_URL)
@@ -47,26 +56,26 @@ def update_figure(rows, selected_row_indices):
     dff = pd.DataFrame(rows)
     fig = plotly.tools.make_subplots(
         rows=3, cols=1,
-        subplot_titles=('Matties', 'Aantal', 'IDB'),
+        subplot_titles=('personInScreenTime', 'Aantal', 'genderDifferential'),
         shared_xaxes=True)
     marker = {'color': ['#0074D9'] * len(dff)}
     for i in (selected_row_indices or []):
         marker['color'][i] = '#FF851B'
     fig.append_trace({
-        'x': dff['Aantal'],
-        'y': dff['Matties'],
+        'x': dff['trackingTime'],
+        'y': dff['personID'],
         'type': 'bar',
         'marker': marker
     }, 1, 1)
     fig.append_trace({
-        'x': dff['Aantal'],
-        'y': dff['Indebuurt'],
+        'x': dff['watchTime'],
+        'y': dff['trackingTime'],
         'type': 'bar',
         'marker': marker
     }, 2, 1)
     fig.append_trace({
-        'x': dff['Aantal'],
-        'y': dff['Indebuurt'],
+        'x': dff['personID'],
+        'y': dff['gender'],
         'type': 'bar',
         'marker': marker
     }, 3, 1)
@@ -87,4 +96,4 @@ app.css.append_css({
 })
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
