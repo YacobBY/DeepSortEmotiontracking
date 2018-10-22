@@ -1,4 +1,5 @@
 import webbrowser
+import datetime
 # Import Supporting Libraries
 import pandas as pd
 
@@ -15,6 +16,7 @@ import csv
 #     csvFile.writerows(['mafasdf,12,42,121'])
 
 a=50
+currentTime =  datetime.datetime.now().replace(microsecond=0).isoformat()
 fields=['6','8','NEUTRAL','ISO8601','MALE','2']
 with open(r'templates/test2.csv', 'a') as f:
     writer = csv.writer(f)
@@ -31,7 +33,7 @@ print(df_ag.head())
 app = dash.Dash(__name__)
 server = app.server
 app.layout = html.Div([
-    html.H2('My Dash App'),
+    html.H2('MACHINE LEARNING INTERFACE'),
     dt.DataTable(
         id='my-datatable',
         rows=df_ag.to_dict('records'),
@@ -92,7 +94,7 @@ def update_figure(rows, selected_row_indices):
 
 
 app.css.append_css({
-    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
+    'external_url': 'templates/cssStylesheet.css'
 })
 
 if __name__ == '__main__':

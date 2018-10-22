@@ -34,11 +34,18 @@ from utils.inference import draw_bounding_box
 from utils.inference import apply_offsets
 from utils.inference import load_detection_model
 from utils.preprocessor import preprocess_input
-
+import csv
 warnings.filterwarnings('ignore')
 
 
 def main(yolo):
+    if
+    with open(r'templates/test2.csv', 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(fields)
+
+
+
     # parameters for loading data and images
     emotion_model_path = './models/emotion_model.hdf5'
     emotion_labels = get_labels('fer2013')
@@ -114,6 +121,7 @@ def main(yolo):
         indices = preprocessing.non_max_suppression(boxes, nms_max_overlap, scores)
         detections = [detections[i] for i in indices]
 
+        #Imagelist is a list of all the images within the tracked bounding boxes of our tracker.
         imageList = []
         # Call the tracker
         tracker.predict()
@@ -132,6 +140,7 @@ def main(yolo):
             imageList.append(numpArr)
             # cv2.destroyAllWindows()
         i = 0
+
         for item in (imageList):
             i += 1
             gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
@@ -210,8 +219,8 @@ def main(yolo):
             bbox = det.to_tlbr()
             # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 0, 0), 2)
             currentPeopleInFrame += 1
-            # print(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
 
+           #Make
             numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
             imageList.append(numpArr)
         # cv2.destroyAllWindows()
@@ -270,12 +279,6 @@ def main(yolo):
                 draw_bounding_box(face_coordinates, rgb_image, color)
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
-
-            # item = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
-            # cv2.imshow('jaja%d' % i, item)
-
-        # cv2.imshow('ajaja', imageList[1])
-        # cv2.imshow('jaja', frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
 
         cv2.imshow('FilteredImage', frame)
         if resetCounter >= amountOfFramesPerScan:
