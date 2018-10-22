@@ -6,3 +6,5 @@ output\.avi
 detection\.txt
 
 model_data/yolo\.h5
+
+demo/MOT17-12\.mp4

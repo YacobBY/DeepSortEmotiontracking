@@ -23,7 +23,7 @@ from deep_sort.detection import Detection as ddet
 # EMOTION IMPORTS UNDER HERE
 
 import cv2
-
+import datetime
 import numpy as np
 from keras.models import load_model
 from statistics import mode
@@ -39,11 +39,13 @@ warnings.filterwarnings('ignore')
 
 
 def main(yolo):
-
-
-    # with open(r'templates/test2.csv', 'a') as f:
-    #     writer = csv.writer(f)
-    #     writer.writerow(fields)
+    a = datetime.datetime.now().replace(microsecond=0).isoformat()
+    a.replace('T', '')
+    print(a)
+    fields = ['6', '8', 'NEUTRAL', '%s' % a, 'MALE', '2']
+    with open(r'templates/test2.csv', 'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(fields)
 
 
 
@@ -82,8 +84,8 @@ def main(yolo):
     resetCounter = 0
     amountOfFramesPerScan = 10
     peopleInFrameList = []
-    # video_capture = cv2.VideoCapture('demo/dinner.mp4')
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture('demo/dinner.mp4')
+    # video_capture = cv2.VideoCapture(0)
 
     if writeVideo_flag:
         # Define the codec and create VideoWriter object

@@ -11,6 +11,7 @@ import dash.dependencies
 from dash.dependencies import Input, Output, State
 import plotly
 import csv
+
 #
 # with open('templates/test2.csv', 'a') as csvFile:
 #     csvFile.writerows(['mafasdf,12,42,121'])
