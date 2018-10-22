@@ -15,9 +15,11 @@ import csv
 # with open('templates/test2.csv', 'a') as csvFile:
 #     csvFile.writerows(['mafasdf,12,42,121'])
 
-a=50
-currentTime =  datetime.datetime.now().replace(microsecond=0).isoformat()
-fields=['6','8','NEUTRAL','ISO8601','MALE','2']
+a = datetime.datetime.now().replace(microsecond=0).isoformat()
+a.replace('T','')
+print(a)
+
+fields=['6','8','NEUTRAL','%s'%a,'MALE','2']
 with open(r'templates/test2.csv', 'a') as f:
     writer = csv.writer(f)
     writer.writerow(fields)

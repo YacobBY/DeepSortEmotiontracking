@@ -40,7 +40,7 @@ warnings.filterwarnings('ignore')
 
 def main(yolo):
 
-   
+
     # with open(r'templates/test2.csv', 'a') as f:
     #     writer = csv.writer(f)
     #     writer.writerow(fields)
