@@ -21,7 +21,6 @@ from tools import generate_detections as gdet
 from deep_sort.detection import Detection as ddet
 
 # EMOTION IMPORTS UNDER HERE
-
 import cv2
 import datetime
 import numpy as np
@@ -34,6 +33,15 @@ from utils.inference import draw_bounding_box
 from utils.inference import apply_offsets
 from utils.inference import load_detection_model
 from utils.preprocessor import preprocess_input
+
+
+
+
+
+
+
+
+
 import csv
 
 warnings.filterwarnings('ignore')
@@ -46,23 +54,30 @@ def main(yolo):
         writer = csv.writer(f)
         writer.writerow(graphInputs)
 
-
     # parameters for loading data and images
-    emotion_model_path = './models/emotion_model.hdf5'
+    detection_model_path = '../trained_models/detection_models/haarcascade_frontalface_default.xml'
+    emotion_model_path = '../trained_models/emotion_models/fer2013_mini_XCEPTION.102-0.66.hdf5'
+    gender_model_path = '../trained_models/gender_models/simple_CNN.81-0.96.hdf5'
     emotion_labels = get_labels('fer2013')
+    gender_labels = get_labels('imdb')
+    font = cv2.FONT_HERSHEY_SIMPLEX
 
     # hyper-parameters for bounding boxes shape
     frame_window = 10
+    gender_offsets = (30, 60)
     emotion_offsets = (20, 40)
 
     # loading models
-    face_cascade = cv2.CascadeClassifier('./models/haarcascade_frontalface_default.xml')
-    emotion_classifier = load_model(emotion_model_path)
+    face_detection = load_detection_model(detection_model_path)
+    emotion_classifier = load_model(emotion_model_path, compile=False)
+    gender_classifier = load_model(gender_model_path, compile=False)
 
     # getting input model shapes for inference
     emotion_target_size = emotion_classifier.input_shape[1:3]
+    gender_target_size = gender_classifier.input_shape[1:3]
 
     # starting lists for calculating modes
+    gender_window = []
     emotion_window = []
 
     # Definition of the parameters
@@ -83,8 +98,8 @@ def main(yolo):
     amountOfFramesPerScan = 10
     peopleInFrameList = []
     # video_capture = cv2.VideoCapture('demo/dinner.mp4')
-    # video_capture = cv2.VideoCapture('demo/MOT1712.mp4')
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture('demo/MOT1712.mp4')
+    # video_capture = cv2.VideoCapture(0)
 
     if writeVideo_flag:
         # Define the codec and create VideoWriter object
@@ -136,8 +151,7 @@ def main(yolo):
             bbox = track.to_tlbr()
 
             #Put rectangle and text on the image
-            # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
-            # cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1])), 0, 5e-3 * 200, (0, 255, 0), 2)
+
 
             currentPeopleInFrame += 1
             # print(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
@@ -149,15 +163,16 @@ def main(yolo):
             imageList.append(numpArr)
             # cv2.destroyAllWindows()
             trackerIDs.append(track.track_id)
-        i = 0
+            i = 0
+            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
+            cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1])), 0, 5e-3 * 200, (0, 255, 0), 2)
 
         for item in (imageList):
 
             gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
             rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
 
-            faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
-                                                  minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
+            faces = detect_faces(face_detection, gray_image)
             #PersonID Set
             graphInputs[0] = '%d'%trackerIDs[i]
             # print("trackerID:", trackerIDs[i])
@@ -217,11 +232,14 @@ def main(yolo):
                 draw_bounding_box(face_coordinates, rgb_image, color)
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
+
             print(graphInputs)
             with open(r'templates/test2.csv', 'a') as f:
                 writer = csv.writer(f)
                 writer.writerow(graphInputs)
+                cv2.imshow('jaja', frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
 
+        # cv2.imshow('ajaja', imageList[0])
 
         cv2.imshow('FilteredImage', frame)
         if resetCounter >= amountOfFramesPerScan:
