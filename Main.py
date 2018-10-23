@@ -151,7 +151,7 @@ def main(yolo):
 
             faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
                                                   minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
-
+            graphInputs[0] = track.track_id
             for face_coordinates in faces:
 
                 x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
