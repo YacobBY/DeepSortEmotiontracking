@@ -41,9 +41,10 @@ warnings.filterwarnings('ignore')
 
 def main(yolo):
     t = datetime.datetime.now().replace(microsecond=0).isoformat()
-    graphInputs = ['6', '8', 'NEUTRAL', '%s' % t, 'MALE', '2']
+    graphInputs = ['1', '8', 'ANGRY', '2018-10-23T14:02:29', 'MALE', '2']
     with open(r'templates/test2.csv', 'a') as f:
         writer = csv.writer(f)
+        writer.writerow(graphInputs)
 
 
     # parameters for loading data and images
@@ -127,32 +128,41 @@ def main(yolo):
         # Call the tracker
         tracker.predict()
         tracker.update(detections)
-
+        trackerIDs = []
         for track in tracker.tracks:
             if track.is_confirmed() and track.time_since_update > 1:
                 continue
             # Gets the location of the BBOx coordinates within the tracker.
             bbox = track.to_tlbr()
+
+            #Put rectangle and text on the image
             # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
             # cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1])), 0, 5e-3 * 200, (0, 255, 0), 2)
+
             currentPeopleInFrame += 1
             # print(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
-
-            numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
+            #Check if bounding box 3 isn't out of bounds before creating image
+            if int(bbox[2]) <= 640:
+                numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
+            else:
+                numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):(int(bbox[0]) + 640)])
             imageList.append(numpArr)
             # cv2.destroyAllWindows()
+            trackerIDs.append(track.track_id)
         i = 0
 
         for item in (imageList):
-            i += 1
+
             gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
             rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
 
             faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
                                                   minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
             #PersonID Set
-            graphInputs[0] = track.track_id
-            graphInputs[3] = datetime.datetime.now().replace(microsecond=0).isoformat()
+            graphInputs[0] = '%d'%trackerIDs[i]
+            print("trackerID:", trackerIDs[i])
+            i += 1
+            graphInputs[3] = '%s'%datetime.datetime.now().replace(microsecond=0).isoformat()
             for face_coordinates in faces:
 
                 x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
@@ -181,23 +191,23 @@ def main(yolo):
                 if emotion_text == 'angry':
                     color = emotion_probability * np.asarray((255, 0, 0))
                     print("angry", i)
-                    graphInputs[2] = "ANGRY"
+                    graphInputs[2] = 'ANGRY'
                 elif emotion_text == 'sad':
                     color = emotion_probability * np.asarray((0, 0, 255))
                     print("sad", i)
-                    graphInputs[2] = "SAD"
-                elif emotion_text == 'happy':
+                    graphInputs[2] = 'SAD'
+                elif emotion_text == "happy":
                     color = emotion_probability * np.asarray((255, 255, 0))
                     print("happy", i)
-                    graphInputs[2] = "HAPPY"
+                    graphInputs[2] = 'HAPPY'
                 elif emotion_text == 'surprise':
                     color = emotion_probability * np.asarray((0, 255, 255))
                     print("surprise", i)
-                    graphInputs[2] = "SURPRISED"
+                    graphInputs[2] = 'SURPRISED'
                 else:
                     color = emotion_probability * np.asarray((0, 255, 0))
                     print("neutral", i)
-                    graphInputs[2] = "NEUTRAL"
+                    graphInputs[2] = 'NEUTRAL'
                 color = color.astype(int)
                 color = color.tolist()
 
@@ -206,7 +216,11 @@ def main(yolo):
                 draw_bounding_box(face_coordinates, rgb_image, color)
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
+            print(graphInputs)
+            with open(r'templates/test2.csv', 'a') as f:
+                writer = csv.writer(f)
                 writer.writerow(graphInputs)
+
 
         cv2.imshow('FilteredImage', frame)
         if resetCounter >= amountOfFramesPerScan:
@@ -223,28 +237,34 @@ def main(yolo):
             resetCounter += 1
         print("Geen print of add deze keer %d" % (resetCounter))
 
-        for det in detections:
-            bbox = det.to_tlbr()
+        # for det in detections:
+        #     bbox = det.to_tlbr()
+        #
+        #     currentPeopleInFrame += 1
+        #     # Make
+        #     numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
+        #     imageList.append(numpArr)
+        #     # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 0, 0), 2)
+        #     # print("bbox")
+        #     # print(int(bbox[0]))
+        #     # print(int(bbox[1]))
+        #     # print(int(bbox[2]))
+        #     # print(int(bbox[3]))
+        #     print("bbox end")
+        # # cv2.destroyAllWindows()
+        # i = 0
+        # for item in (imageList):
+        #     i += 1
+        #     gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
+        #     rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
+        #
+        #     faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
+        #                                           minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
 
-            currentPeopleInFrame += 1
-            # Make
-            numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
-            imageList.append(numpArr)
-            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 0, 0), 2)
-        # cv2.destroyAllWindows()
-        i = 0
-        for item in (imageList):
-            i += 1
-            gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
-            rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
-
-            faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
-                                                  minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
-
-            for face_coordinates in faces:
-                draw_bounding_box(face_coordinates, rgb_image, color)
-                draw_text(face_coordinates, rgb_image, emotion_mode,
-                          color, 0, -45, 1, 1)
+            # for face_coordinates in faces:
+            #     draw_bounding_box(face_coordinates, rgb_image, color)
+            #     draw_text(face_coordinates, rgb_image, emotion_mode,
+            #               color, 0, -45, 1, 1)
 
         cv2.imshow('FilteredImage', frame)
         if resetCounter >= amountOfFramesPerScan:

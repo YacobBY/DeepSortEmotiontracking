@@ -25,9 +25,9 @@ with open(r'templates/test2.csv', 'a') as f:
     writer = csv.writer(f)
     writer.writerow(fields)
 
+
 # Load datasets
 US_AG_URL = 'templates/test2.csv'
-
 df_ag = pd.read_csv(US_AG_URL)
 
 print(df_ag.head())
