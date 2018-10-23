@@ -151,6 +151,7 @@ def main(yolo):
 
             faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
                                                   minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
+            #PersonID Set
             graphInputs[0] = track.track_id
             for face_coordinates in faces:
 
@@ -176,6 +177,7 @@ def main(yolo):
                 except:
                     continue
 
+                #Emotion set
                 if emotion_text == 'angry':
                     color = emotion_probability * np.asarray((255, 0, 0))
                     print("angry", i)
