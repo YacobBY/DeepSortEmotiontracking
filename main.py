@@ -238,8 +238,6 @@ def main(yolo):
             resetCounter += 1
         print("Geen print of add deze keer %d" % (resetCounter))
 
-        cv2.imshow('FilteredImage', frame)
-
         if resetCounter >= amountOfFramesPerScan:
             peopleInFrameList.append(currentPeopleInFrame)
             print("Total amount of people %d" % (currentPeopleInFrame))
