@@ -43,9 +43,8 @@ def main(yolo):
     t = datetime.datetime.now().replace(microsecond=0).isoformat()
     graphInputs = ['6', '8', 'NEUTRAL', '%s' % t, 'MALE', '2']
     with open(r'templates/test2.csv', 'a') as f:
-
         writer = csv.writer(f)
-        writer.writerow(graphInputs)
+
 
     # parameters for loading data and images
     emotion_model_path = './models/emotion_model.hdf5'
@@ -153,6 +152,7 @@ def main(yolo):
                                                   minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
             #PersonID Set
             graphInputs[0] = track.track_id
+            graphInputs[3] = datetime.datetime.now().replace(microsecond=0).isoformat()
             for face_coordinates in faces:
 
                 x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
@@ -206,6 +206,7 @@ def main(yolo):
                 draw_bounding_box(face_coordinates, rgb_image, color)
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
+                writer.writerow(graphInputs)
 
         cv2.imshow('FilteredImage', frame)
         if resetCounter >= amountOfFramesPerScan:
@@ -262,11 +263,11 @@ def main(yolo):
             # save a frame
             out.write(frame)
             frame_index = frame_index + 1
-            list_file.write(str(frame_index) + ' ')
+            list_file.write(str(frame_index) + '')
             if len(boxs) != 0:
                 for i in range(0, len(boxs)):
                     list_file.write(
-                        str(boxs[i][0]) + ' ' + str(boxs[i][1]) + ' ' + str(boxs[i][2]) + ' ' + str(boxs[i][3]) + ' ')
+                        str(boxs[i][0]) + ' ' + str(boxs[i][1]) + ' ' + str(boxs[i][2]) + ' ' + str(boxs[i][3]) + '')
             list_file.write('\n')
 
         fps = (fps + (1. / (time.time() - t1))) / 2
