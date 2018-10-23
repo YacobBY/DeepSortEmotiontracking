@@ -35,19 +35,17 @@ from utils.inference import apply_offsets
 from utils.inference import load_detection_model
 from utils.preprocessor import preprocess_input
 import csv
+
 warnings.filterwarnings('ignore')
 
 
 def main(yolo):
-    a = datetime.datetime.now().replace(microsecond=0).isoformat()
-    a.replace('T', '')
-    print(a)
-    fields = ['6', '8', 'NEUTRAL', '%s' % a, 'MALE', '2']
+    t = datetime.datetime.now().replace(microsecond=0).isoformat()
+    graphInputs = ['6', '8', 'NEUTRAL', '%s' % t, 'MALE', '2']
     with open(r'templates/test2.csv', 'a') as f:
+
         writer = csv.writer(f)
-        writer.writerow(fields)
-
-
+        writer.writerow(graphInputs)
 
     # parameters for loading data and images
     emotion_model_path = './models/emotion_model.hdf5'
@@ -80,12 +78,13 @@ def main(yolo):
     metric = nn_matching.NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
     tracker = Tracker(metric)
 
-    writeVideo_flag = True
+    writeVideo_flag = False
     resetCounter = 0
     amountOfFramesPerScan = 10
     peopleInFrameList = []
-    video_capture = cv2.VideoCapture('demo/dinner.mp4')
-    # video_capture = cv2.VideoCapture(0)
+    # video_capture = cv2.VideoCapture('demo/dinner.mp4')
+    # video_capture = cv2.VideoCapture('demo/MOT1712.mp4')
+    video_capture = cv2.VideoCapture(0)
 
     if writeVideo_flag:
         # Define the codec and create VideoWriter object
@@ -124,7 +123,7 @@ def main(yolo):
         indices = preprocessing.non_max_suppression(boxes, nms_max_overlap, scores)
         detections = [detections[i] for i in indices]
 
-        #Imagelist is a list of all the images within the tracked bounding boxes of our tracker.
+        # Imagelist is a list of all the images within the tracked bounding boxes of our tracker.
         imageList = []
         # Call the tracker
         tracker.predict()
@@ -133,6 +132,7 @@ def main(yolo):
         for track in tracker.tracks:
             if track.is_confirmed() and track.time_since_update > 1:
                 continue
+            # Gets the location of the BBOx coordinates within the tracker.
             bbox = track.to_tlbr()
             # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
             # cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1])), 0, 5e-3 * 200, (0, 255, 0), 2)
@@ -169,7 +169,6 @@ def main(yolo):
                 emotion_label_arg = np.argmax(emotion_prediction)
                 emotion_text = emotion_labels[emotion_label_arg]
                 emotion_window.append(emotion_text)
-
                 if len(emotion_window) > frame_window:
                     emotion_window.pop(0)
                 try:
@@ -180,38 +179,41 @@ def main(yolo):
                 if emotion_text == 'angry':
                     color = emotion_probability * np.asarray((255, 0, 0))
                     print("angry", i)
+                    graphInputs[2] = "ANGRY"
                 elif emotion_text == 'sad':
                     color = emotion_probability * np.asarray((0, 0, 255))
                     print("sad", i)
+                    graphInputs[2] = "SAD"
                 elif emotion_text == 'happy':
                     color = emotion_probability * np.asarray((255, 255, 0))
                     print("happy", i)
+                    graphInputs[2] = "HAPPY"
                 elif emotion_text == 'surprise':
                     color = emotion_probability * np.asarray((0, 255, 255))
                     print("surprise", i)
+                    graphInputs[2] = "SURPRISED"
                 else:
                     color = emotion_probability * np.asarray((0, 255, 0))
                     print("neutral", i)
+                    graphInputs[2] = "NEUTRAL"
                 color = color.astype(int)
                 color = color.tolist()
+
+                # -------------------------------------
 
                 draw_bounding_box(face_coordinates, rgb_image, color)
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
-
-            item = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
-            cv2.imshow('jaja%d' % i, item)
-
-        # cv2.imshow('ajaja', imageList[1])
-        # cv2.imshow('jaja', frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
 
         cv2.imshow('FilteredImage', frame)
         if resetCounter >= amountOfFramesPerScan:
             peopleInFrameList.append(currentPeopleInFrame)
             print("Total amount of people %d" % (currentPeopleInFrame))
 
+            # Print
             # for x in range(len(peopleInFrameList)):
             #     print("listie  %d" % (peopleInFrameList[x]))
+
             print(peopleInFrameList)
             resetCounter = 0
         else:
@@ -220,12 +222,12 @@ def main(yolo):
 
         for det in detections:
             bbox = det.to_tlbr()
-            # cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 0, 0), 2)
-            currentPeopleInFrame += 1
 
-           #Make
+            currentPeopleInFrame += 1
+            # Make
             numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
             imageList.append(numpArr)
+            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 0, 0), 2)
         # cv2.destroyAllWindows()
         i = 0
         for item in (imageList):
@@ -237,48 +239,6 @@ def main(yolo):
                                                   minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
 
             for face_coordinates in faces:
-
-                x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
-                gray_face = gray_image[y1:y2, x1:x2]
-                try:
-                    gray_face = cv2.resize(gray_face, (emotion_target_size))
-                except:
-                    continue
-
-                gray_face = preprocess_input(gray_face, True)
-                gray_face = np.expand_dims(gray_face, 0)
-                gray_face = np.expand_dims(gray_face, -1)
-                emotion_prediction = emotion_classifier.predict(gray_face)
-                emotion_probability = np.max(emotion_prediction)
-                emotion_label_arg = np.argmax(emotion_prediction)
-                emotion_text = emotion_labels[emotion_label_arg]
-                emotion_window.append(emotion_text)
-
-                if len(emotion_window) > frame_window:
-                    emotion_window.pop(0)
-                try:
-                    emotion_mode = mode(emotion_window)
-                except:
-                    continue
-
-                if emotion_text == 'angry':
-                    color = emotion_probability * np.asarray((255, 0, 0))
-                    print("angry", i)
-                elif emotion_text == 'sad':
-                    color = emotion_probability * np.asarray((0, 0, 255))
-                    print("sad", i)
-                elif emotion_text == 'happy':
-                    color = emotion_probability * np.asarray((255, 255, 0))
-                    print("happy", i)
-                elif emotion_text == 'surprise':
-                    color = emotion_probability * np.asarray((0, 255, 255))
-                    print("surprise", i)
-                else:
-                    color = emotion_probability * np.asarray((0, 255, 0))
-                    print("neutral", i)
-                color = color.astype(int)
-                color = color.tolist()
-
                 draw_bounding_box(face_coordinates, rgb_image, color)
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
@@ -319,6 +279,7 @@ def main(yolo):
         out.release()
         list_file.close()
     cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
     main(YOLO())
