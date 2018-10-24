@@ -34,7 +34,6 @@ from utils.inference import apply_offsets
 from utils.inference import load_detection_model
 from utils.preprocessor import preprocess_input
 
-
 import csv
 
 warnings.filterwarnings('ignore')
@@ -91,8 +90,8 @@ def main(yolo):
     amountOfFramesPerScan = 10
     peopleInFrameList = []
     # video_capture = cv2.VideoCapture('demo/dinner.mp4')
-    video_capture = cv2.VideoCapture('demo/MOT1712.mp4')
-    # video_capture = cv2.VideoCapture(0)
+    # video_capture = cv2.VideoCapture('demo/MOT1712.mp4')
+    video_capture = cv2.VideoCapture(0)
 
     if writeVideo_flag:
         # Define the codec and create VideoWriter object
@@ -143,12 +142,11 @@ def main(yolo):
             # Gets the location of the BBOx coordinates within the tracker.
             bbox = track.to_tlbr()
 
-            #Put rectangle and text on the image
-
+            # Put rectangle and text on the image
 
             currentPeopleInFrame += 1
             # print(int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
-            #Check if bounding box 3 isn't out of bounds before creating image
+            # Check if bounding box 3 isn't out of bounds before creating image
             if int(bbox[2]) <= 640:
                 numpArr = np.array(frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
             else:
@@ -159,9 +157,9 @@ def main(yolo):
             i = 0
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
             cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1])), 0, 5e-3 * 200, (0, 255, 0), 2)
-
+            print("printje KOMT HIER")
         for item in (imageList):
-
+            print("printje KOMT HIER0")
             gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
             rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
             faces = detect_faces(face_detection, gray_image)
@@ -171,7 +169,7 @@ def main(yolo):
             graphInputs[3] = '%s' % datetime.datetime.now().replace(microsecond=0).isoformat()
 
             for face_coordinates in faces:
-
+                print("printje KOMT 1")
                 x1, x2, y1, y2 = apply_offsets(face_coordinates, gender_offsets)
                 rgb_face = rgb_image[y1:y2, x1:x2]
 
@@ -182,6 +180,7 @@ def main(yolo):
                     gray_face = cv2.resize(gray_face, (emotion_target_size))
                 except:
                     continue
+                print("printje KOMT HIER2")
                 gray_face = preprocess_input(gray_face, True)
                 gray_face = np.expand_dims(gray_face, 0)
                 gray_face = np.expand_dims(gray_face, -1)
@@ -197,7 +196,6 @@ def main(yolo):
                 graphInputs[4] = gender_text
                 gender_window.append(gender_text)
 
-
                 if len(gender_window) > frame_window:
                     emotion_window.pop(0)
                     gender_window.pop(0)
@@ -206,8 +204,8 @@ def main(yolo):
                     gender_mode = mode(gender_window)
                 except:
                     continue
-
-                graphInputs[2] = ('%s'%emotion_mode)
+                print("printje KOMT HIER 3 %s" % emotion_mode)
+                graphInputs[2] = ('%s' % emotion_mode)
                 if gender_text == gender_labels[0]:
                     color = (0, 0, 255)
                 else:
