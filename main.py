@@ -41,6 +41,7 @@ warnings.filterwarnings('ignore')
 
 def main(yolo):
     t = datetime.datetime.now().replace(microsecond=0).isoformat()
+    # write only if values are not empty
     graphInputs = ['1', '8', 'Emotion', '2018-10-23T14:02:29', 'MALE', '2']
     with open(r'templates/test2.csv', 'a') as f:
         writer = csv.writer(f)
@@ -90,8 +91,8 @@ def main(yolo):
     amountOfFramesPerScan = 10
     peopleInFrameList = []
     # video_capture = cv2.VideoCapture('demo/dinner.mp4')
-    # video_capture = cv2.VideoCapture('demo/MOT1712.mp4')
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture('demo/MOT1712.mp4')
+    # video_capture = cv2.VideoCapture(0)
 
     if writeVideo_flag:
         # Define the codec and create VideoWriter object
@@ -197,7 +198,8 @@ def main(yolo):
                 graphInputs[4] = gender_text
                 gender_window.append(gender_text)
 
-
+        #overwrite emotion label met leeg  als er niks gevonden wordt of laat hele persoon weg
+                #Als er niks gevonden wordt, niks schrijven
                 print("printje KOMT HIER 3 %s" % emotion_labels[emotion_label_arg])
                 graphInputs[2] = ('%s' % emotion_labels[emotion_label_arg])
                 if gender_text == gender_labels[0]:
