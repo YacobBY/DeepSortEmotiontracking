@@ -35,8 +35,6 @@ from utils.inference import load_detection_model
 from utils.preprocessor import preprocess_input
 
 
-
-
 import csv
 
 warnings.filterwarnings('ignore')
@@ -44,35 +42,35 @@ warnings.filterwarnings('ignore')
 
 def main(yolo):
     t = datetime.datetime.now().replace(microsecond=0).isoformat()
-    graphInputs = ['1', '8', 'ANGRY', '2018-10-23T14:02:29', 'MALE', '2']
+    graphInputs = ['1', '8', 'Emotion', '2018-10-23T14:02:29', 'MALE', '2']
     with open(r'templates/test2.csv', 'a') as f:
         writer = csv.writer(f)
         writer.writerow(graphInputs)
 
-
     # parameters for loading data and images
-    emotion_model_path = './models/emotion_model.hdf5'
-    emotion_labels = get_labels('fer2013')
-
-    # hyper-parameters for bounding boxes shape
-    frame_window = 10
-    emotion_offsets = (20, 40)
-
-    # loading models
-
-    detection_model_path = cv2.CascadeClassifier('./models/haarcascade_frontalface_default.xml')
-    emotion_classifier = load_model(emotion_model_path)
-
     detection_model_path = 'trained_models/detection_models/haarcascade_frontalface_default.xml'
-    emotion_model_path = 'trained_models/emotion_models/simple_CNN.985-0.66.hdf5'
+    emotion_model_path = 'trained_models/emotion_models/fer2013_mini_XCEPTION.102-0.66.hdf5'
     gender_model_path = 'trained_models/gender_models/simple_CNN.81-0.96.hdf5'
     emotion_labels = get_labels('fer2013')
     gender_labels = get_labels('imdb')
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    # hyper-parameters for bounding boxes shape
+    frame_window = 10
+    gender_offsets = (30, 60)
+    emotion_offsets = (20, 40)
+
+    # loading models
+    face_detection = load_detection_model(detection_model_path)
+    emotion_classifier = load_model(emotion_model_path, compile=False)
+    gender_classifier = load_model(gender_model_path, compile=False)
 
     # getting input model shapes for inference
     emotion_target_size = emotion_classifier.input_shape[1:3]
+    gender_target_size = gender_classifier.input_shape[1:3]
 
     # starting lists for calculating modes
+    gender_window = []
     emotion_window = []
 
     # Definition of the parameters
@@ -166,68 +164,125 @@ def main(yolo):
 
             gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
             rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
+            faces = detect_faces(face_detection, gray_image)
 
-            faces = detection_model_path.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
-                                                  minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
-            #PersonID Set
-            graphInputs[0] = '%d'%trackerIDs[i]
-            # print("trackerID:", trackerIDs[i])
+            graphInputs[0] = '%d' % trackerIDs[i]
             i += 1
-            graphInputs[3] = '%s'%datetime.datetime.now().replace(microsecond=0).isoformat()
+            graphInputs[3] = '%s' % datetime.datetime.now().replace(microsecond=0).isoformat()
 
             for face_coordinates in faces:
+
+                x1, x2, y1, y2 = apply_offsets(face_coordinates, gender_offsets)
+                rgb_face = rgb_image[y1:y2, x1:x2]
 
                 x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
                 gray_face = gray_image[y1:y2, x1:x2]
                 try:
+                    rgb_face = cv2.resize(rgb_face, (gender_target_size))
                     gray_face = cv2.resize(gray_face, (emotion_target_size))
                 except:
                     continue
-
                 gray_face = preprocess_input(gray_face, True)
                 gray_face = np.expand_dims(gray_face, 0)
                 gray_face = np.expand_dims(gray_face, -1)
-                emotion_prediction = emotion_classifier.predict(gray_face)
-                emotion_probability = np.max(emotion_prediction)
-                emotion_label_arg = np.argmax(emotion_prediction)
+                emotion_label_arg = np.argmax(emotion_classifier.predict(gray_face))
                 emotion_text = emotion_labels[emotion_label_arg]
                 emotion_window.append(emotion_text)
-                if len(emotion_window) > frame_window:
+
+                rgb_face = np.expand_dims(rgb_face, 0)
+                rgb_face = preprocess_input(rgb_face, False)
+                gender_prediction = gender_classifier.predict(rgb_face)
+                gender_label_arg = np.argmax(gender_prediction)
+                gender_text = gender_labels[gender_label_arg]
+                graphInputs[4] = gender_text
+                gender_window.append(gender_text)
+
+
+                if len(gender_window) > frame_window:
                     emotion_window.pop(0)
+                    gender_window.pop(0)
                 try:
                     emotion_mode = mode(emotion_window)
+                    gender_mode = mode(gender_window)
                 except:
                     continue
 
-                #Emotion set
-                if emotion_text == 'angry':
-                    color = emotion_probability * np.asarray((255, 0, 0))
-                    print("angry", i)
-                    graphInputs[2] = 'ANGRY'
-                elif emotion_text == 'sad':
-                    color = emotion_probability * np.asarray((0, 0, 255))
-                    print("sad", i)
-                    graphInputs[2] = 'SAD'
-                elif emotion_text == "happy":
-                    color = emotion_probability * np.asarray((255, 255, 0))
-                    print("happy", i)
-                    graphInputs[2] = 'HAPPY'
-                elif emotion_text == 'surprise':
-                    color = emotion_probability * np.asarray((0, 255, 255))
-                    print("surprise", i)
-                    graphInputs[2] = 'SURPRISED'
+                graphInputs[2] = ('%s'%emotion_mode)
+                if gender_text == gender_labels[0]:
+                    color = (0, 0, 255)
                 else:
-                    color = emotion_probability * np.asarray((0, 255, 0))
-                    print("neutral", i)
-                    graphInputs[2] = 'NEUTRAL'
-                # color = color.astype(int)
-                # color = color.tolist()
-
-                # -------------------------------------
+                    color = (255, 0, 0)
 
                 draw_bounding_box(face_coordinates, rgb_image, color)
+                draw_text(face_coordinates, rgb_image, gender_mode,
+                          color, 0, -20, 1, 1)
                 draw_text(face_coordinates, rgb_image, emotion_mode,
                           color, 0, -45, 1, 1)
+
+            # gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
+            # rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
+            #
+            # faces = face_cascade.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
+            #                                       minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
+            # #PersonID Set
+            # graphInputs[0] = '%d'%trackerIDs[i]
+            # # print("trackerID:", trackerIDs[i])
+            # i += 1
+            # graphInputs[3] = '%s'%datetime.datetime.now().replace(microsecond=0).isoformat()
+            #
+            # for face_coordinates in faces:
+            #
+            #     x1, x2, y1, y2 = apply_offsets(face_coordinates, emotion_offsets)
+            #     gray_face = gray_image[y1:y2, x1:x2]
+            #     try:
+            #         gray_face = cv2.resize(gray_face, (emotion_target_size))
+            #     except:
+            #         continue
+            #
+            #     gray_face = preprocess_input(gray_face, True)
+            #     gray_face = np.expand_dims(gray_face, 0)
+            #     gray_face = np.expand_dims(gray_face, -1)
+            #     emotion_prediction = emotion_classifier.predict(gray_face)
+            #     emotion_probability = np.max(emotion_prediction)
+            #     emotion_label_arg = np.argmax(emotion_prediction)
+            #     emotion_text = emotion_labels[emotion_label_arg]
+            #     emotion_window.append(emotion_text)
+            #     if len(emotion_window) > frame_window:
+            #         emotion_window.pop(0)
+            #     try:
+            #         emotion_mode = mode(emotion_window)
+            #     except:
+            #         continue
+            #
+            #     #Emotion set
+            #     if emotion_text == 'angry':
+            #         color = emotion_probability * np.asarray((255, 0, 0))
+            #         print("angry", i)
+            #         graphInputs[2] = 'ANGRY'
+            #     elif emotion_text == 'sad':
+            #         color = emotion_probability * np.asarray((0, 0, 255))
+            #         print("sad", i)
+            #         graphInputs[2] = 'SAD'
+            #     elif emotion_text == "happy":
+            #         color = emotion_probability * np.asarray((255, 255, 0))
+            #         print("happy", i)
+            #         graphInputs[2] = 'HAPPY'
+            #     elif emotion_text == 'surprise':
+            #         color = emotion_probability * np.asarray((0, 255, 255))
+            #         print("surprise", i)
+            #         graphInputs[2] = 'SURPRISED'
+            #     else:
+            #         color = emotion_probability * np.asarray((0, 255, 0))
+            #         print("neutral", i)
+            #         graphInputs[2] = 'NEUTRAL'
+            #     # color = color.astype(int)
+            #     # color = color.tolist()
+            #
+            #     # -------------------------------------
+            #
+            #     draw_bounding_box(face_coordinates, rgb_image, color)
+            #     draw_text(face_coordinates, rgb_image, emotion_mode,
+            #               color, 0, -45, 1, 1)
 
             print(graphInputs)
             with open(r'templates/test2.csv', 'a') as f:
