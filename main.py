@@ -157,9 +157,10 @@ def main(yolo):
             i = 0
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
             cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1])), 0, 5e-3 * 200, (0, 255, 0), 2)
-            print("printje KOMT HIER")
+            print("Found tracked human")
+
         for item in (imageList):
-            print("printje KOMT HIER0")
+            print("Scanning human")
             gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
             rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
             faces = detect_faces(face_detection, gray_image)
@@ -196,26 +197,22 @@ def main(yolo):
                 graphInputs[4] = gender_text
                 gender_window.append(gender_text)
 
-                if len(gender_window) > frame_window:
-                    emotion_window.pop(0)
-                    gender_window.pop(0)
-                try:
-                    emotion_mode = mode(emotion_window)
-                    gender_mode = mode(gender_window)
-                except:
-                    continue
-                print("printje KOMT HIER 3 %s" % emotion_mode)
-                graphInputs[2] = ('%s' % emotion_mode)
+
+                print("printje KOMT HIER 3 %s" % emotion_labels[emotion_label_arg])
+                graphInputs[2] = ('%s' % emotion_labels[emotion_label_arg])
                 if gender_text == gender_labels[0]:
                     color = (0, 0, 255)
                 else:
                     color = (255, 0, 0)
 
-                draw_bounding_box(face_coordinates, rgb_image, color)
-                draw_text(face_coordinates, rgb_image, gender_mode,
-                          color, 0, -20, 1, 1)
-                draw_text(face_coordinates, rgb_image, emotion_mode,
-                          color, 0, -45, 1, 1)
+
+
+
+                # draw_bounding_box(face_coordinates, rgb_image, color)
+                # draw_text(face_coordinates, rgb_image, gender_mode,
+                #           color, 0, -20, 1, 1)
+                # draw_text(face_coordinates, rgb_image, emotion_mode,
+                #           color, 0, -45, 1, 1)
 
             # gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
             # rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
@@ -286,7 +283,7 @@ def main(yolo):
             with open(r'templates/test2.csv', 'a') as f:
                 writer = csv.writer(f)
                 writer.writerow(graphInputs)
-                cv2.imshow('jaja', frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
+        # cv2.imshow('jaja', frame[int((bbox[1])):int(bbox[1] + bbox[3]), int(bbox[0]):int(bbox[0] + bbox[2])])
 
         # cv2.imshow('ajaja', imageList[0])
 

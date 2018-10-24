@@ -2,7 +2,7 @@ import webbrowser
 import datetime
 # Import Supporting Libraries
 import pandas as pd
-
+import collections
 # Import Dash Visualization Libraries
 import dash_core_components as dcc
 import dash_html_components as html
@@ -20,11 +20,24 @@ a = datetime.datetime.now().replace(microsecond=0).isoformat()
 a.replace('T','')
 print(a)
 
+csvFile =  'templates/test2.csv'
 fields=['6','8','NEUTRAL','%s'%a,'MALE','2']
 with open(r'templates/test2.csv', 'a') as f:
     writer = csv.writer(f)
     writer.writerow(fields)
 
+genderRow = pd.read_csv(csvFile)
+row = genderRow['gender']
+counter = collections.Counter(row)
+print(counter)
+
+#delete onderstaand
+# rowList = [[]]
+# for gender in genderRow:
+#     rowList.append(gender[gender])
+
+
+print(row)
 
 # Load datasets
 US_AG_URL = 'templates/test2.csv'
@@ -62,7 +75,7 @@ def update_figure(rows, selected_row_indices):
     fig = plotly.tools.make_subplots(
         rows=3, cols=1,
         subplot_titles=('personInScreenTime', 'Aantal', 'genderDifferential'),
-        shared_xaxes=True)
+        shared_xaxes=False)
     marker = {'color': ['#0074D9'] * len(dff)}
     for i in (selected_row_indices or []):
         marker['color'][i] = '#FF851B'
