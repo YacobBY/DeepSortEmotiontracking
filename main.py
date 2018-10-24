@@ -37,11 +37,6 @@ from utils.preprocessor import preprocess_input
 
 
 
-
-
-
-
-
 import csv
 
 warnings.filterwarnings('ignore')
@@ -54,30 +49,30 @@ def main(yolo):
         writer = csv.writer(f)
         writer.writerow(graphInputs)
 
+
     # parameters for loading data and images
-    detection_model_path = '../trained_models/detection_models/haarcascade_frontalface_default.xml'
-    emotion_model_path = '../trained_models/emotion_models/fer2013_mini_XCEPTION.102-0.66.hdf5'
-    gender_model_path = '../trained_models/gender_models/simple_CNN.81-0.96.hdf5'
+    emotion_model_path = './models/emotion_model.hdf5'
     emotion_labels = get_labels('fer2013')
-    gender_labels = get_labels('imdb')
-    font = cv2.FONT_HERSHEY_SIMPLEX
 
     # hyper-parameters for bounding boxes shape
     frame_window = 10
-    gender_offsets = (30, 60)
     emotion_offsets = (20, 40)
 
     # loading models
-    face_detection = load_detection_model(detection_model_path)
-    emotion_classifier = load_model(emotion_model_path, compile=False)
-    gender_classifier = load_model(gender_model_path, compile=False)
+
+    detection_model_path = cv2.CascadeClassifier('./models/haarcascade_frontalface_default.xml')
+    emotion_classifier = load_model(emotion_model_path)
+
+    detection_model_path = 'trained_models/detection_models/haarcascade_frontalface_default.xml'
+    emotion_model_path = 'trained_models/emotion_models/simple_CNN.985-0.66.hdf5'
+    gender_model_path = 'trained_models/gender_models/simple_CNN.81-0.96.hdf5'
+    emotion_labels = get_labels('fer2013')
+    gender_labels = get_labels('imdb')
 
     # getting input model shapes for inference
     emotion_target_size = emotion_classifier.input_shape[1:3]
-    gender_target_size = gender_classifier.input_shape[1:3]
 
     # starting lists for calculating modes
-    gender_window = []
     emotion_window = []
 
     # Definition of the parameters
@@ -172,7 +167,8 @@ def main(yolo):
             gray_image = cv2.cvtColor(item, cv2.COLOR_BGR2GRAY)
             rgb_image = cv2.cvtColor(item, cv2.COLOR_BGR2RGB)
 
-            faces = detect_faces(face_detection, gray_image)
+            faces = detection_model_path.detectMultiScale(gray_image, scaleFactor=1.1, minNeighbors=5,
+                                                  minSize=(0, 0), flags=cv2.CASCADE_SCALE_IMAGE)
             #PersonID Set
             graphInputs[0] = '%d'%trackerIDs[i]
             # print("trackerID:", trackerIDs[i])
